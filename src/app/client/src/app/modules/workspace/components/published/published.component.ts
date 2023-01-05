@@ -164,6 +164,10 @@ export class PublishedComponent extends WorkSpace implements OnInit, AfterViewIn
    * To show/hide collection modal
    */
   public collectionListModal = false;
+    /**
+   * To check if questionSet enabled
+   */
+  public isQuestionSetEnabled: boolean;
 
   /**
     * Constructor to create injected service(s) object
@@ -196,6 +200,11 @@ export class PublishedComponent extends WorkSpace implements OnInit, AfterViewIn
   }
 
   ngOnInit() {
+    this.workSpaceService.questionSetEnabled$.subscribe(
+      (response: any) => {
+          this.isQuestionSetEnabled = response.questionSetEnablement;
+        }
+    );
     combineLatest(
       this.activatedRoute.params,
       this.activatedRoute.queryParams).pipe(
@@ -218,7 +227,7 @@ export class PublishedComponent extends WorkSpace implements OnInit, AfterViewIn
         status: ['Live'],
         createdBy: this.userService.userid,
         contentType: ['Course'],
-        objectType: this.config.appConfig.WORKSPACE.objectType,
+        objectType: this.isQuestionSetEnabled ? this.config.appConfig.WORKSPACE.allObjectType : this.config.appConfig.WORKSPACE.objectType,
       },
       sort_by: { lastUpdatedOn: 'desc' }
     };
@@ -264,7 +273,7 @@ export class PublishedComponent extends WorkSpace implements OnInit, AfterViewIn
       filters: {
         status: ['Live'],
         createdBy: this.userService.userid,
-        objectType: this.config.appConfig.WORKSPACE.objectType,
+        objectType: this.isQuestionSetEnabled ? this.config.appConfig.WORKSPACE.allObjectType : this.config.appConfig.WORKSPACE.objectType,
         // tslint:disable-next-line:max-line-length
         primaryCategory: _.get(bothParams, 'queryParams.primaryCategory') || (!_.isEmpty(primaryCategories) ? primaryCategories : this.config.appConfig.WORKSPACE.primaryCategory),
         // mimeType: this.config.appConfig.WORKSPACE.mimeType,
@@ -283,7 +292,7 @@ export class PublishedComponent extends WorkSpace implements OnInit, AfterViewIn
     };
     this.search(searchParams).subscribe(
       (data: ServerResponse) => {
-        const allContent= this.workSpaceService.getAllContent(data);
+        const allContent= this.workSpaceService.getAllContent(data, this.isQuestionSetEnabled);
         if (allContent.length > 0) {
           this.publishedContent = allContent;
           this.totalCount = data.result.count;
